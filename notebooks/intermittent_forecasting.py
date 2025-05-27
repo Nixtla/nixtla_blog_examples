@@ -92,10 +92,12 @@ def _(mo):
 
 @app.cell
 def _(client, sales_data):
-    client.plot(
+    sales_plot = client.plot(
         sales_data,
         max_insample_length=365,
     )
+
+    sales_plot
     return
 
 
@@ -127,12 +129,18 @@ def _(mo):
 
 @app.cell
 def _(client, log_transformed_data, sales_data):
+    import matplotlib.pyplot as plt
+
+    # Create a figure and axis for Matplotlib
+    _, ax = plt.subplots(figsize=(10, 5))
+
     # Plot the original data
-    ax = client.plot(
+    client.plot(
         sales_data,
         max_insample_length=30,
         unique_ids=["FOODS_1_001"],
-        engine="plotly",
+        engine="matplotlib",
+        ax=ax,
     )
 
     # Plot the transformed data on the same axes
@@ -140,21 +148,22 @@ def _(client, log_transformed_data, sales_data):
         log_transformed_data,
         max_insample_length=30,
         unique_ids=["FOODS_1_001"],
-        engine="plotly",
+        engine="matplotlib",
         ax=ax,
     )
 
-    # Update theme
-    ax.update_layout(template="plotly_dark")
+    # Manually change the color of the second line plot
+    lines = ax.get_lines()
+    if len(lines) > 1:
+        lines[1].set_color("#006400")  # New color for transformed data
+        lines[1].set_linestyle("--")
 
-    # Customize names and colors
-    ax.data[0].name = "Original Sales"
-    ax.data[0].line.color = "#98FE09"
-    ax.data[1].name = "Transformed Sales"
-    ax.data[1].line.color = "#02FEFA"
+    # Add legend with custom labels
+    handles, labels = ax.get_legend_handles_labels()
+    labels = ["Original Sales", "Transformed Sales"]
+    ax.legend(handles, labels)
 
-    # Show the plot
-    ax.show()
+    ax
     return
 
 
