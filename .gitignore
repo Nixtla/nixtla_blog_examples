@@ -14,3 +14,5 @@ wheels/
 
 # Cursor
 .DS_Store
+
+images/*.svg

@@ -89,7 +89,8 @@ def _(mo):
 
 @app.cell
 def _(nixtla_client, wikipedia):
-    nixtla_client.plot(wikipedia)
+    wikipedia_plot = nixtla_client.plot(wikipedia)
+    wikipedia_plot
     return
 
 
@@ -124,7 +125,8 @@ def _(mo):
 
 @app.cell
 def _(anomalies_df, nixtla_client, wikipedia):
-    nixtla_client.plot(wikipedia, anomalies_df)
+    anomaly_plot = nixtla_client.plot(wikipedia, anomalies_df)
+    anomaly_plot
     return
 
 
@@ -160,10 +162,12 @@ def _(mo):
 
 @app.cell
 def _(nixtla_client):
-    nixtla_client.weights_x.plot.barh(
+    feature_plot = nixtla_client.weights_x.plot.barh(
         x="features",
         y="weights"
     )
+
+    feature_plot
     return
 
 
@@ -191,7 +195,14 @@ def _(mo):
 
 @app.cell
 def _(anomalies_df_exogenous, nixtla_client, wikipedia):
-    nixtla_client.plot(wikipedia, anomalies_df_exogenous)
+    anomalies_exogenous_plot = nixtla_client.plot(wikipedia, anomalies_df_exogenous)
+    anomalies_exogenous_plot
+    return (anomalies_exogenous_plot,)
+
+
+@app.cell
+def _(anomalies_exogenous_plot):
+    anomalies_exogenous_plot.savefig("images/anomalies_exogenous_plot.svg", format="svg", bbox_inches="tight")
     return
 
 
@@ -235,7 +246,14 @@ def _(mo):
 
 @app.cell
 def _(anomalies_df_70, nixtla_client, wikipedia):
-    nixtla_client.plot(wikipedia, anomalies_df_70)
+    anomalies_70_plot = nixtla_client.plot(wikipedia, anomalies_df_70)
+    anomalies_70_plot
+    return (anomalies_70_plot,)
+
+
+@app.cell
+def _(anomalies_70_plot):
+    anomalies_70_plot.savefig("images/anomalies_70_plot.svg", format="svg", bbox_inches="tight")
     return
 
 
