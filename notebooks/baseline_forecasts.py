@@ -12,7 +12,7 @@
 
 import marimo
 
-__generated_with = "0.13.6"
+__generated_with = "0.13.9"
 app = marimo.App(width="medium", app_title="Baseline Forecasts")
 
 
@@ -37,8 +37,13 @@ def _(mo):
 @app.cell
 def _():
     import os
+    import sys
+    import pathlib 
 
     import pandas as pd
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
     from statsforecast import StatsForecast
     from statsforecast.models import (
         HistoricAverage,
@@ -57,6 +62,7 @@ def _():
         StatsForecast,
         WindowAverage,
         evaluate,
+        pathlib,
         pd,
         rmse,
     )
@@ -74,8 +80,14 @@ def _(mo):
 
 
 @app.cell
-def _(pd):
-    df = pd.read_csv("data/tourism.csv")
+def _(pathlib, pd):
+
+    libpath_computed = str(pathlib.Path.cwd().parent.absolute())
+
+
+    df = pd.read_parquet(f'{libpath_computed}/data/tourism.parquet', engine='pyarrow')
+
+    # df = pd.read_csv("data/tourism.csv")
     df["ds"] = pd.PeriodIndex(df["ds"], freq="Q").to_timestamp()
     df
     return (df,)
