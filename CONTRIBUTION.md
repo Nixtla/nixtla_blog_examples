@@ -95,8 +95,8 @@ This list includes four common baseline models:
 
 ## Write Article Draft
 
-1. Create your blog post in [HackMD](https://hackmd.io)
-2. Follow [these instructions](https://hackmd.io/c/tutorials/%2F%40docs%2Finvite-others-to-a-private-note-en) to share your draft with khuyentran@nixtla.io for review
+1. Create your blog post in the [nixtla/web](https://github.com/nixtla/web) repository
+2. Follow [these instructions](https://github.com/nixtla/web?tab=readme-ov-file#blog) to create a new blog post
 
 ## Write Code
 
