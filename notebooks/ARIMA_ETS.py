@@ -1,4 +1,13 @@
 # /// script
+# dependencies = [
+#     "marimo",
+#     "matplotlib==3.10.3",
+#     "numpy==2.2.6",
+#     "pandas==2.3.0",
+#     "statsforecast==2.0.1",
+#     "statsmodels==0.14.4",
+#     "utilsforecast==0.2.12",
+# ]
 # [tool.marimo.runtime]
 # auto_instantiate = false
 # ///
@@ -15,11 +24,9 @@ def _():
     import numpy as np
     import pandas as pd
     import matplotlib.pyplot as plt
-    from statsmodels.tsa.arima_process import ArmaProcess
     from statsforecast import StatsForecast
     from statsforecast.models import AutoARIMA
     from statsforecast.arima import ARIMASummary
-    from copy import deepcopy
     import statsmodels.api as sm
     from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
     from statsmodels.stats.diagnostic import acorr_ljungbox
@@ -30,12 +37,11 @@ def _():
     from statsforecast.models import AutoETS
     from statsmodels.tsa.holtwinters import ExponentialSmoothing
     import warnings
-    warnings.filterwarnings("ignore")
-
+    warnings.simplefilter(action='ignore', category=UserWarning)
+    warnings.simplefilter(action='ignore', category=FutureWarning)
     return (
         ARIMA,
         ARIMASummary,
-        ArmaProcess,
         AutoARIMA,
         AutoETS,
         ExponentialSmoothing,
@@ -54,47 +60,69 @@ def _():
 
 
 @app.cell
-def _(ArmaProcess, np, pd):
-    # ======================
+def _(np, pd):
+    # ==================================================================================
     # Generate Enhanced Synthetic Time Series (Daily Quantity sold in a retail Company)
-    # ======================
+    # ==================================================================================
 
-    # Set random seed for reproducibility
-    np.random.seed(0)
 
-    # Define ARIMA parameters
-    ar = np.array([1, -0.5])  # AR(1) coefficient
-    ma = np.array([1, 0.4])   # MA(1) coefficient
-    d = 1                     # Differencing order
+    def generate_synthetic_retail_data(
+        start_date='2024-01-01',
+        n_days=365,
+        base_quantity=50,
+        trend_slope=0.1,
+        weekly_amplitude=10,
+        yearly_amplitude=25,
+        noise_std_dev=5):
 
-    # Create ARMA process
-    arma_process = ArmaProcess(ar, ma)
+        # Generate date range
+        dates = pd.date_range(start=start_date, periods=n_days, freq='D')
+        time_index = np.arange(n_days)
 
-    # Number of samples
-    n_samples = 365  # 1 year of daily data
+        # 1. Base Quantity
+        # This is the fundamental level of sales.
+        base = np.full(n_days, base_quantity)
 
-    # Generate ARMA(1,1) data
-    arma_sample = arma_process.generate_sample(nsample=n_samples, scale=1)
+        # 2. Trend Component (Linear)
+        # Simulates a gradual increase or decrease in sales over time.
+        trend = trend_slope * time_index
 
-    # Integrate to get ARIMA(1,1,1)
-    arima_sample = np.cumsum(arma_sample)  # Cumulative sum to introduce differencing (d=1)
+        # 3. Seasonality Component (Weekly)
+        # Simulates recurring patterns within a week (e.g., higher sales on weekends).
+        # Using a sine wave for smooth weekly fluctuations.
+        weekly_seasonality = weekly_amplitude * np.sin(2 * np.pi * time_index / 7)
 
-    # Generate Trend Component (e.g., linear trend)
-    trend = np.linspace(10, 20, n_samples)  # Increasing from 10 to 20 over the year
+        # 4. Seasonality Component (Yearly)
+        # Simulates recurring patterns within a year (e.g., holiday sales, seasonal demand).
+        # Using a sine wave for smooth yearly fluctuations.
+        yearly_seasonality = yearly_amplitude * np.sin(2 * np.pi * time_index / 365)
 
-    # Generate Seasonality Component (e.g., weekly seasonality)
-    seasonality = 10 + 5 * np.sin(2 * np.pi * np.arange(n_samples) / 7)  # Weekly pattern
+        # 5. Random Noise Component
+        # Adds unpredictable, random fluctuations to the data.
+        # Using a normal distribution for noise.
+        np.random.seed(42) # for reproducibility
+        noise = np.random.normal(0, noise_std_dev, n_days)
 
-    # Combine components to form the final synthetic time series
-    synthetic_series = trend + seasonality + arima_sample
+        # Combine all components
+        # Ensure quantities are non-negative
+        synthetic_series_values = base + trend + weekly_seasonality + yearly_seasonality + noise
+        synthetic_series_values[synthetic_series_values < 0] = 0 # Ensure no negative quantities
 
-    # Generate Date Range
-    dates = pd.date_range(start='2024-01-01', periods=n_samples, freq='D')
+        # Create a Pandas Series
+        time_series = pd.Series(synthetic_series_values, index=dates, name='Daily_Quantity_Sold')
 
-    # Create Pandas Series
-    time_series = pd.Series(synthetic_series, index=dates, name='Daily_Quantity')
+        return time_series
+
+    # --- Generate the synthetic data ---
+    time_series = generate_synthetic_retail_data()
 
     return (time_series,)
+
+
+@app.cell
+def _(time_series):
+    time_series
+    return
 
 
 @app.cell
@@ -103,7 +131,7 @@ def _(pd, time_series):
     data = time_series.copy()
     data= data.reset_index()
     df=pd.DataFrame(data)
-    df = df.rename(columns={'index': 'ds', 'Daily_Quantity': 'y'})
+    df = df.rename(columns={'index': 'ds', 'Daily_Quantity_Sold': 'y'})
     df["unique_id"] = "1"
     df.columns=["ds", "y", "unique_id"]
 
@@ -181,128 +209,120 @@ def _(ARIMASummary, AutoARIMA, StatsForecast, df):
     # Fit ARIMA
     #--------------------------
 
-    def _():
-        # Find the suitable model with AutoARIMA
-        models = [AutoARIMA(allowmean=True)]
+    # Find the suitable model with AutoARIMA
+    models_ar = [AutoARIMA()]
 
-        # Initialize StatsForecast
-        sf=StatsForecast(models=models,freq='D', n_jobs=-1)
+    # Initialise StatsForecast
+    sf_ar=StatsForecast(models=models_ar,freq='D', n_jobs=-1).fit(df=df[["ds", "y", "unique_id"]])
 
-        # Fit the model
-        sf.fit(df=df[["ds", "y", "unique_id"]])
+    # Retrieve the fitted ARIMA model
+    fitted_arima_model = sf_ar.fitted_[0, 0].model_
+    # Print ARIMA Model Summary
+    print("\nARIMA Model Summary:")
+    print(ARIMASummary(fitted_arima_model))
 
-        # Retrieve the fitted ARIMA model
-        fitted_arima_model = sf.fitted_[0, 0].model_
-        # Print ARIMA Model Summary
-        print("\nARIMA Model Summary:")
-        return print(ARIMASummary(fitted_arima_model))
-
-
-    _()
     return
 
 
 @app.cell
 def _(ARIMA, ARIMASummary, StatsForecast, df, pd):
-    def _():
-        # Compare the AutoARIMA model with other ARIMA models
-        models = [
-            ARIMA(order=(1, 1, 1), alias="arima111"),
-            ARIMA(order=(2, 1, 2), alias="arima212"),
-            ARIMA(order=(2, 1, 3), alias="arima213"),
-            ARIMA(order=(2, 1, 4), alias="arima214"),
-            ARIMA(order=(3, 1, 4), alias="arima314"),
-        ]
+    # Compare the AutoARIMA model with other ARIMA models
+    models_ = [
+        ARIMA(order=(1, 1, 1), alias="arima111"),
+        ARIMA(order=(3, 1, 2), alias="arima312"),
+        ARIMA(order=(2, 1, 3), alias="arima213"),
+        ARIMA(order=(2, 1, 4), alias="arima214"),
+        ARIMA(order=(3, 1, 4), alias="arima314"),
+    ]
 
-        sf = StatsForecast(models=models, freq="D", n_jobs=-1)
+    sf_ar_ = StatsForecast(models=models_, freq="D", n_jobs=-1).fit(df=df[["ds", "y", "unique_id"]])
 
-        sf.fit(df=df[["ds", "y", "unique_id"]])
-
-        summaries = []
-        for model in sf.fitted_[0]:
-            summary_model = {
-                "model": model,
-                "Orders": ARIMASummary(model.model_),
-                "aic": model.model_["aic"],
-                "aicc": model.model_["aicc"],
-                "bic": model.model_["bic"],
-            }
-            summaries.append(summary_model)
-        return pd.DataFrame(sorted(summaries, key=lambda d: d["aicc"]))
-
-
-    _()
+    summaries_arima = []
+    for model_arima in sf_ar_.fitted_[0]:
+        summary_model_arima = {
+            "model": model_arima,
+            "Orders": ARIMASummary(model_arima.model_),
+            "aic": model_arima.model_["aic"],
+            "aicc": model_arima.model_["aicc"],
+            "bic": model_arima.model_["bic"],
+        }
+        summaries_arima.append(summary_model_arima)
+    pd.DataFrame(sorted(summaries_arima, key=lambda d: d["aicc"]))
     return
 
 
 @app.cell
 def _(acorr_ljungbox, df, plot_acf, plot_pacf, plt, sm):
-    def _():
-        # ======================
-        # Residuals Diagnostics Using statsmodels
-        # ======================
 
-        # Fit the best ARIMA model using statsmodels for diagnostics
-        model_sm = sm.tsa.ARIMA(df.set_index('ds')['y'], order=(2, 1, 4))
-        fitted_model_sm = model_sm.fit()
+    # ======================
+    # Residuals Diagnostics Using statsmodels
+    # ======================
 
-        # Print statsmodels ARIMA summary
-        print("\nStatsmodels ARIMA Model Summary:")
-        print(fitted_model_sm.summary())
+    # Fit the best ARIMA model using statsmodels for diagnostics
+    fitted_model_sm_ar = sm.tsa.ARIMA(df.set_index('ds')['y'], order=(3, 1, 4)).fit()
 
-        # Extract residuals
-        residuals = fitted_model_sm.resid
+    # Print statsmodels ARIMA summary
+    print("\nStatsmodels ARIMA Model Summary:")
+    print(fitted_model_sm_ar.summary())
 
-        # Plot residuals and diagnostics
-        plt.figure(figsize=(14,8))
+    # Extract residuals
+    residuals = fitted_model_sm_ar.resid
 
-        # Plot Residuals
-        plt.subplot(2,2,1)
-        plt.plot(residuals)
-        plt.title('Residuals')
-        plt.xlabel('Date')
-        plt.ylabel('Residuals')
+    # Plot residuals and diagnostics
+    plt.figure(figsize=(14,8))
 
-        # Plot ACF of Residuals
-        plt.subplot(2,2,2)
-        plot_acf(residuals, lags=21, ax=plt.gca())
-        plt.title('ACF of Residuals')
+    # Plot Residuals
+    plt.subplot(2,2,1)
+    plt.plot(residuals)
+    plt.title('Residuals')
+    plt.xlabel('Date')
+    plt.ylabel('Residuals')
 
-        # Plot PACF of Residuals
-        plt.subplot(2,2,3)
-        plot_pacf(residuals, lags=28, ax=plt.gca(), method='ywm')
-        plt.title('PACF of Residuals')
+    # Plot ACF of Residuals
+    plt.subplot(2,2,2)
+    plot_acf(residuals, lags=7, ax=plt.gca())
+    plt.title('ACF of Residuals')
 
-        # QQ-Plot
-        plt.subplot(2,2,4)
-        sm.qqplot(residuals, line='s', ax=plt.gca())
-        plt.title('QQ-Plot of Residuals')
+    # Plot PACF of Residuals
+    plt.subplot(2,2,3)
+    plot_pacf(residuals, lags=7, ax=plt.gca(), method='ywm')
+    plt.title('PACF of Residuals')
 
-        plt.tight_layout()
-        plt.show()
+    # QQ-Plot
+    plt.subplot(2,2,4)
+    sm.qqplot(residuals, line='s', ax=plt.gca())
+    plt.title('QQ-Plot of Residuals')
 
-        # Perform Ljung-Box test for autocorrelation
-        lb_test = acorr_ljungbox(residuals, lags=[28], return_df=True)
-        print("\nLjung-Box Test Results:")
-        print(lb_test)
+    plt.tight_layout()
+    plt.show()
 
-        # Interpretation
-        if lb_test['lb_pvalue'].iloc[-1] > 0.05:
-            print("\nConclusion: Residuals are independently distributed (fail to reject H₀). Good fit.")
-        else:
-            return print("\nConclusion: Residuals are not independently distributed (reject H₀). Consider revising the model.")
+    # Perform Ljung-Box test for autocorrelation
+    lb_test = acorr_ljungbox(residuals, lags=[7], return_df=True)
+    print("\nLjung-Box Test Results:")
+    print(lb_test)
+
+    # Interpretation
+    if lb_test['lb_pvalue'].iloc[-1] > 0.05:
+        print("\nConclusion: Residuals are independently distributed (fail to reject H₀). Good fit.")
+    else:
+        print("\nConclusion: Residuals are not independently distributed (reject H₀). Consider revising the model.")
 
 
-    _()
+
     return
 
 
 @app.cell
-def _(df, plot_series, sf):
-    # Make 1 month prediction
-    forecast_ARIMA = sf.predict(h=30)
-    plot_series(df=df[["ds", "y", "unique_id"]], forecasts_df=forecast_ARIMA)
+def _(ARIMA, StatsForecast, df, plot_series):
+    # Make a 1-month prediction
+    # fit the best model
+    models_arima = [ARIMA(order=(3,1,4))]
 
+    # Initialise StatsForecast
+    sf_arima=StatsForecast(models=models_arima,freq='D', n_jobs=-1).fit(df=df[["ds", "y", "unique_id"]])
+
+    forecast_ARIMA = sf_arima.predict(h=30)
+    plot_series(df=df[["ds", "y", "unique_id"]], forecasts_df=forecast_ARIMA)
 
     return
 
@@ -330,55 +350,45 @@ def _(df, seasonal_decompose):
 
 @app.cell
 def _(AutoETS, StatsForecast, df):
-    def _():
-        # Find suitable model with AutoETS
-        models = [AutoETS()]
 
-        # Initialize StatsForecast
-        sf = StatsForecast(
-            models=models,
-            freq='D',    # Daily frequency
-            n_jobs=-1
-        )
+    # Find a suitable model with AutoETS
+    models_ets = [AutoETS()]
 
-        # Fit the model
-        sf.fit(df=df[["ds", "y", "unique_id"]])
-
-        # Retrieve the fitted ETS model
-        fitted_ets_model = sf.fitted_[0, 0].model_["method"]
-        # Print ETS Model Summary
-        print("\nETS Model Summary:")
-        return print(fitted_ets_model)
+    # Initialise StatsForecast
+    sf_ets = StatsForecast(models=models_ets,freq='D', n_jobs=-1).fit(df=df[["ds", "y", "unique_id"]])
 
 
-    _()
-    return
+    # Retrieve the fitted ETS model
+    fitted_ets_model = sf_ets.fitted_[0, 0].model_["method"]
+    # Print ETS Model Summary
+    print("\nETS Model Summary:")
+    print(fitted_ets_model)
+
+    return (sf_ets,)
 
 
 @app.cell
 def _(AutoETS, StatsForecast, df, pd):
     # Compare AutoETS choice with other models
-    models=[AutoETS(model="ANN", alias="SES"),
+    models_ets_=[AutoETS(model="ANN", alias="SES"),
             AutoETS(model="AAN", alias="Holt"),
     ]
 
-    sf = StatsForecast(models=models, freq="D", n_jobs=-1)
+    sf_ets_ = StatsForecast(models=models_ets_, freq="D", n_jobs=-1).fit(df=df[["ds", "y", "unique_id"]])
 
-    sf.fit(df=df[["ds", "y", "unique_id"]])
-
-    summaries = []
-    for model in sf.fitted_[0]:
-        summary_model = {
-            "model": model,
-            "Orders": model.model_["method"],
-            "aic": model.model_["aic"],
-            "aicc": model.model_["aicc"],
-            "bic": model.model_["bic"],
+    summaries_ets = []
+    for model_ets in sf_ets_.fitted_[0]:
+        summary_model_ets = {
+            "model": model_ets,
+            "Orders": model_ets.model_["method"],
+            "aic": model_ets.model_["aic"],
+            "aicc": model_ets.model_["aicc"],
+            "bic": model_ets.model_["bic"],
         }
-        summaries.append(summary_model)
+        summaries_ets.append(summary_model_ets)
 
-    pd.DataFrame(sorted(summaries, key=lambda d: d["aicc"]))
-    return (sf,)
+    pd.DataFrame(sorted(summaries_ets, key=lambda d: d["aicc"]))
+    return
 
 
 @app.cell
@@ -388,71 +398,72 @@ def _(ExponentialSmoothing, acorr_ljungbox, df, plot_acf, plot_pacf, plt, sm):
     # ======================
 
     # Fit the same ETS model using statsmodels for diagnostics
-    model_ets = ExponentialSmoothing(
+    fitted_model_ets = ExponentialSmoothing(
         df.set_index('ds')['y'],
         trend=None,
         seasonal=None,
-        seasonal_periods=7
-    )
-    fitted_model_ets = model_ets.fit()
+        seasonal_periods=7).fit()
 
     # Print ETS model summary
     print("\nETS Model Summary:")
     print(fitted_model_ets.summary())
 
     # Extract residuals
-    residuals = fitted_model_ets.resid
+    residuals_ets = fitted_model_ets.resid
 
     # Plot residuals and diagnostics
     plt.figure(figsize=(14,8))
 
     # Plot Residuals
     plt.subplot(2,2,1)
-    plt.plot(residuals)
+    plt.plot(residuals_ets)
     plt.title('Residuals')
     plt.xlabel('Date')
     plt.ylabel('Residuals')
 
     # Plot ACF of Residuals
     plt.subplot(2,2,2)
-    plot_acf(residuals, lags=28, ax=plt.gca())
+    plot_acf(residuals_ets, lags=7, ax=plt.gca())
     plt.title('ACF of Residuals')
 
     # Plot PACF of Residuals
     plt.subplot(2,2,3)
-    plot_pacf(residuals, lags=28, ax=plt.gca(), method='ywm')
+    plot_pacf(residuals_ets, lags=7, ax=plt.gca(), method='ywm')
     plt.title('PACF of Residuals')
 
     # QQ-Plot
     plt.subplot(2,2,4)
-    sm.qqplot(residuals, line='s', ax=plt.gca())
+    sm.qqplot(residuals_ets, line='s', ax=plt.gca())
     plt.title('QQ-Plot of Residuals')
 
     plt.tight_layout()
     plt.show()
 
     # Perform Ljung-Box test for autocorrelation
-    lb_test = acorr_ljungbox(residuals, lags=[28], return_df=True)
+    lb_test_ets = acorr_ljungbox(residuals_ets, lags=[7], return_df=True)
     print("\nLjung-Box Test Results:")
-    print(lb_test)
+    print(lb_test_ets)
 
     # Interpretation
-    if lb_test['lb_pvalue'].iloc[-1] > 0.05:
+    if lb_test_ets['lb_pvalue'].iloc[-1] > 0.05:
         print("\nConclusion: Residuals are independently distributed (fail to reject H₀). Good fit.")
     else:
         print("\nConclusion: Residuals are not independently distributed (reject H₀). Consider revising the model.")
-    model_sm = sm.tsa.ARIMA(df.set_index('ds')['y'], order=(2, 1, 4))
-    fitted_model_sm = model_sm.fit()
 
 
     return
 
 
 @app.cell
-def _(df, plot_series, sf):
-    # make 1 month prediction
-    forecast_ETS = sf.predict(h=30)
+def _(df, plot_series, sf_ets):
+    # make 1-month prediction
+    forecast_ETS = sf_ets.predict(h=30)
     plot_series(df=df[["ds", "y", "unique_id"]], forecasts_df=forecast_ETS)
+    return
+
+
+@app.cell
+def _():
     return
 
 
