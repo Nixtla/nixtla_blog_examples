@@ -130,49 +130,38 @@ We use pre-commit to ensure code quality and consistency.
 uv run pre-commit install
 ```
 
-### Working with Marimo Notebooks
+### Working with Jupyter Notebooks
 
 #### Creating a New Notebook
 
-Create a new notebook in the `notebooks` directory using marimo:
+Create a new notebook in the `notebooks` directory using Jupyter:
 
 ```bash
-uv run marimo edit notebooks/your_notebook_name.py --sandbox
+uv run jupyter lab
 ```
+
+Then create a new notebook file in the `notebooks/` directory.
 
 #### Notebook Creation Guidelines
 
-- [ ] Use snake_case for notebook names (e.g., `anomaly_detection.py`, `intermittent_forecasting.py`)
+- [ ] Use snake_case for notebook names (e.g., `anomaly_detection.ipynb`, `intermittent_forecasting.ipynb`)  
 - [ ] Keep notebook names short but descriptive
-- [ ] Create headings as markdown blocks (Command/Control + Shift + M)
-- [ ] Hide markdown code of headings (Command/Control + H)
+- [ ] Create headings using markdown cells
+- [ ] Structure notebooks with clear sections and explanations
 
-#### Publishing Notebooks
+#### Running Notebooks
 
-To export your marimo notebooks to HTML locally:
+To run the notebooks locally:
 
-1. Make sure the `export_notebook.sh` script is executable:
+```bash
+# Start Jupyter Lab
+uv run jupyter lab
 
-   ```bash
-   chmod +x export_notebook.sh
-   ```
+# Or start Jupyter Notebook  
+uv run jupyter notebook
+```
 
-2. Run the script with your notebook name:
-
-   ```bash
-   # Either format works:
-   ./export_notebook.sh notebooks/notebook_name
-   ./export_notebook.sh notebooks/notebook_name.py
-   ```
-
-   For example:
-
-   ```bash
-   ./export_notebook.sh notebooks/anomaly_detection
-   ./export_notebook.sh notebooks/intermittent_forecasting
-   ```
-
-The exported HTML files will be automatically deployed to GitHub Pages through the GitHub Actions workflow.
+This will start a local server where you can interact with the notebooks in your browser.
 
 ### Pull Request Process
 

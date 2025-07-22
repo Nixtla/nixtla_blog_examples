@@ -16,3 +16,4 @@ wheels/
 .DS_Store
 
 images/*.svg
+.mypy_cache/

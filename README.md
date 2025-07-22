@@ -29,27 +29,32 @@ pre-commit install
 
 ## Project Structure
 
-- `notebooks/`: Contains marimo notebooks for each blog post
+- `notebooks/`: Contains Jupyter notebooks for each blog post
 - `README.md`: This file
 
 Each blog post's code is organized in its own notebook, named according to the blog post title.
 
 ## Available Notebooks
 
-- [Anomaly Detection](https://khuyentran1401.github.io/nixtla_blogs/anomaly_detection.html) - Learn how to detect anomalies in time series data using TimeGPT
-- [Intermittent Forecasting](https://khuyentran1401.github.io/nixtla_blogs/intermittent_forecasting.html) - Explore demand forecasting techniques for intermittent time series
+- **Anomaly Detection** (`anomaly_detection.ipynb`) - Learn how to detect anomalies in time series data using TimeGPT
+- **Baseline Forecasts** (`baseline_forecasts.ipynb`) - Explore baseline forecasting methods and their effectiveness  
+- **Intermittent Forecasting** (`intermittent_forecasting.ipynb`) - Explore demand forecasting techniques for intermittent time series
 
 ## Running Notebooks Locally
 
-[Marimo](https://marimo.io) is a Python notebook environment that combines the interactivity of Jupyter with the power of modern Python. It provides a clean, distraction-free interface for data analysis and visualization.
+The notebooks are standard Jupyter notebooks that can be run in any Jupyter environment.
 
-To run the notebooks locally, you can use marimo's sandbox mode:
+To run the notebooks locally, you can use:
 
 ```bash
-marimo edit --sandbox notebook.py
+# Start Jupyter Lab
+uv run jupyter lab
+
+# Or start Jupyter Notebook  
+uv run jupyter notebook
 ```
 
-This will start a local server where you can interact with the notebook in your browser.
+This will start a local server where you can interact with the notebooks in your browser.
 
 ## Contributing
 
