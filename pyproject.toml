@@ -7,11 +7,14 @@ requires-python = ">=3.11"
 dependencies = [
     "nixtla>=0.6.6",
     "pandas>=2.2.3",
-    "matplotlib>=3.10.1",
+    "matplotlib>=3.10.3",
     "numpy>=2.2.5",
     "plotly>=6.0.1",
     "python-dotenv>=1.1.0",
     "statsforecast>=2.0.1",
     "utilsforecast>=0.2.12",
     "jupyter>=1.0.0",
+    "ipykernel>=6.30.0",
+    "lightgbm>=4.6.0",
+    "mlforecast>=1.0.2",
 ]
