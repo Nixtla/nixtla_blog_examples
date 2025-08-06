@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 import pandas as pd
 import pytest
 
-from src.retail_forecasting.forecasting import (
+from src.forecasting import (
     calculate_metrics,
     compare_scenarios,
     generate_recommendation,
@@ -124,7 +124,7 @@ class TestValidateApiKey:
         assert not is_valid
         assert "required" in message.lower()
 
-    @patch("src.retail_forecasting.forecasting.NixtlaClient")
+    @patch("src.forecasting.NixtlaClient")
     def test_validate_api_key_valid(self, mock_client):
         # Mock successful client initialization
         mock_client.return_value = Mock()
@@ -134,7 +134,7 @@ class TestValidateApiKey:
         assert is_valid
         assert "valid" in message.lower()
 
-    @patch("src.retail_forecasting.forecasting.NixtlaClient")
+    @patch("src.forecasting.NixtlaClient")
     def test_validate_api_key_invalid(self, mock_client):
         # Mock client initialization failure
         mock_client.side_effect = Exception("Invalid API key")
@@ -146,7 +146,7 @@ class TestValidateApiKey:
 
 
 class TestInitializeClient:
-    @patch("src.retail_forecasting.forecasting.NixtlaClient")
+    @patch("src.forecasting.NixtlaClient")
     def test_initialize_client_success(self, mock_client):
         mock_instance = Mock()
         mock_client.return_value = mock_instance

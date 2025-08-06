@@ -3,9 +3,9 @@ from unittest.mock import patch
 import pandas as pd
 import pytest
 
-from src.retail_forecasting.data import create_scenario_data, load_sample_data
-from src.retail_forecasting.forecasting import calculate_metrics, compare_scenarios
-from src.retail_forecasting.main import get_scenario_multipliers
+from src.data import create_scenario_data, load_sample_data
+from src.forecasting import calculate_metrics, compare_scenarios
+from src.main import get_scenario_multipliers
 
 
 class TestScenarioIntegration:
@@ -79,7 +79,7 @@ class TestScenarioIntegration:
             == expected_prices
         )
 
-    @patch("src.retail_forecasting.forecasting.generate_forecast")
+    @patch("src.forecasting.generate_forecast")
     def test_scenario_comparison_workflow(self, mock_forecast):
         """Test the complete scenario comparison workflow"""
         # Mock forecast data

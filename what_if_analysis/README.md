@@ -28,7 +28,7 @@ Transform retail pricing decisions with AI-powered demand forecasting. Upload yo
 
 3. **Run the application:**
    ```bash
-   uv run streamlit run src/retail_forecasting/main.py
+   uv run streamlit run src/main.py
    ```
 
 4. **Open your browser:** Navigate to `http://localhost:8501`
@@ -85,14 +85,16 @@ Transform retail pricing decisions with AI-powered demand forecasting. Upload yo
 what_if_analysis/
 ├── pyproject.toml              # Dependencies and configuration
 ├── README.md                   # This file
-├── sample_data/
-│   └── m5_sample.csv          # Demo dataset
-├── src/retail_forecasting/
+├── src/
+│   ├── __init__.py            # Package initialization
 │   ├── main.py                # Streamlit app entry point
 │   ├── data.py                # Data loading and processing
 │   ├── forecasting.py         # TimeGPT integration
 │   └── ui.py                  # Streamlit UI components
+├── sample_data/
+│   └── m5_sample.csv          # Demo dataset
 └── tests/
+    ├── conftest.py            # Test configuration
     ├── test_data.py           # Data processing tests
     ├── test_forecasting.py    # Forecasting logic tests
     └── test_scenarios.py      # Integration tests
@@ -125,7 +127,7 @@ uv run ruff format src/
 ```
 
 ### Adding New Scenarios
-To add custom pricing scenarios, modify `get_scenario_multipliers()` in `src/retail_forecasting/main.py`:
+To add custom pricing scenarios, modify `get_scenario_multipliers()` in `src/main.py`:
 
 ```python
 def get_scenario_multipliers():
@@ -216,4 +218,4 @@ This project is provided as an educational example. TimeGPT usage subject to [Ni
 ---
 
 **Ready to optimize your pricing strategy?**
-Run `uv run streamlit run src/retail_forecasting/main.py` and start forecasting!
+Run `uv run streamlit run src/main.py` and start forecasting!

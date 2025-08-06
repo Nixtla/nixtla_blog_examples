@@ -4,7 +4,7 @@ import tempfile
 import pandas as pd
 import pytest
 
-from src.retail_forecasting.data import (
+from src.data import (
     create_scenario_data,
     get_data_summary,
     load_data,

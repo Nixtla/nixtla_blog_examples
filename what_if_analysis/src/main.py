@@ -1,7 +1,18 @@
+import sys
+from pathlib import Path
+
 import streamlit as st
 
-from .data import load_data, load_sample_data, prepare_data, validate_forecast_data
-from .forecasting import (
+# Add parent directory to Python path for direct imports
+sys.path.append(str(Path(__file__).parent))
+
+from data import (  # noqa: E402
+    load_data,
+    load_sample_data,
+    prepare_data,
+    validate_forecast_data,
+)
+from forecasting import (  # noqa: E402
     calculate_metrics,
     compare_scenarios,
     generate_forecast,
@@ -9,7 +20,7 @@ from .forecasting import (
     initialize_client,
     validate_api_key,
 )
-from .ui import (
+from ui import (  # noqa: E402
     display_data_overview,
     render_header,
     render_sidebar,

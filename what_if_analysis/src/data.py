@@ -5,7 +5,7 @@ import pandas as pd
 
 def load_sample_data():
     """Load built-in sample dataset for demo"""
-    sample_path = Path(__file__).parent.parent.parent / "sample_data" / "m5_sample.csv"
+    sample_path = Path(__file__).parent.parent / "sample_data" / "m5_sample.csv"
     return pd.read_csv(sample_path)
 
 
